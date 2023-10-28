@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Linq;
+using static UnityEditor.Progress;
 
 public class CWNodeDataFactor
 {
@@ -24,12 +25,14 @@ public class CWNodeDataFactor
     public VisualElement Inspector;
     public VisualElement BlackBoardContent;
     public ListView blackBoardListView;
-
     public string NodeGUID;
-
-    public void AddInformationToBlackBoard(CWNodeBaseInformation.BlackBoard BlackBoardDatas)
+    public void AddInformationToBlackBoard(CWNodeBlackBoard BlackBoardDatas)
     {
-        blackBoardListView = BlackBoardContent.Q<ListView>("variables");
+        //if BlackBoardDatas is null
+        if (!BlackBoardDatas)
+        {
+            BlackBoardDatas= ScriptableObject.CreateInstance<CWNodeBlackBoard>();
+        }
         blackBoardListView.makeItem = () =>
         {
             VisualElement templateBlackBoardContainer = new VisualElement();
@@ -40,18 +43,28 @@ public class CWNodeDataFactor
         };
         blackBoardListView.bindItem = (item, index) =>
         {
+            if (index> BlackBoardDatas.Variables.Count - 1)
+            {
+                return;
+            }
             SerializedObject serializedObject = new SerializedObject(BlackBoardDatas.Variables[index]);
-
             SerializedProperty property = serializedObject.FindProperty("Value");
             item.Q<PropertyField>("field").label = BlackBoardDatas.VariableNames[index];
             item.Q<PropertyField>("field").BindProperty(property);
             item.Q<PropertyField>("field").Bind(serializedObject);
         };
+
         blackBoardListView.itemsSource = BlackBoardDatas.Variables;
     }
+
     VisualElement templateInspectorContainer = new VisualElement();
-    public void AddInformationToInspector(CWNodeBaseInformation.Inspector InspectorDatas)
+    public void AddInformationToInspector(CWNodeInspector InspectorDatas)
     {
+        if (!InspectorDatas)
+        {
+            templateInspectorContainer.Clear();
+            return;
+        }
         templateInspectorContainer.Clear();
         SerializedObject serializedNode = new SerializedObject(InspectorDatas);
         SerializedProperty nodeProperty = serializedNode.GetIterator();

@@ -12,7 +12,7 @@ public class Sequence : CWNode
     //一旦存在子节点返回失败的状态，则马上停止遍历。
     public override NodeStates Evaluate()
     {
-        Debug.Log("Selector");
+        Debug.Log("Sequence");
 
         bool anyNodeRunning = false;
 

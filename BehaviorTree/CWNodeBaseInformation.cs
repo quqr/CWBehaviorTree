@@ -22,6 +22,5 @@ public class CWNodeBaseInformation
     {
         public List<string> VariableNames = new List<string>();
         public List<VariablesReference> Variables = new List<VariablesReference>();
-        public Dictionary<string, List<VariablesReference>> datas = new Dictionary<string, List<VariablesReference>>();
     }
 }

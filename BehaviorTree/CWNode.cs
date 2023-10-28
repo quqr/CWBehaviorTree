@@ -54,6 +54,24 @@ public class CWNode : Node
         RefreshExpandedState();
         RefreshPorts();
     }
+    public virtual void SetOutputPort()
+    {
+        outputPort = InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Multi, typeof(Node));
+        outputPort.portName = null;
+        outputContainer.Add(outputPort);
+
+        RefreshExpandedState();
+        RefreshPorts();
+    }
+    public virtual void SetInputPort()
+    {
+        inputPort = InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Single, typeof(Node));
+        inputPort.portName = null;
+        inputContainer.Add(inputPort);
+
+        RefreshExpandedState();
+        RefreshPorts();
+    }
 
     public void SetRootPort()
     {
@@ -88,13 +106,17 @@ public class CWNode : Node
         RefreshPorts();
     }
 
-    public CWNodeBaseInformation.Inspector InspectorDatas = ScriptableObject.CreateInstance<CWNodeBaseInformation.Inspector>();
-    public CWNodeBaseInformation.BlackBoard BlackBoardDatas = ScriptableObject.CreateInstance<CWNodeBaseInformation.BlackBoard>();
-   
+    public CWNodeInspector InspectorDatas = ScriptableObject.CreateInstance<CWNodeInspector>();
+    public CWNodeBlackBoard BlackBoardDatas = ScriptableObject.CreateInstance<CWNodeBlackBoard>();
     public override void OnSelected()
     {
         CWNodeDataFactor.Instance.NodeGUID = GUID;
         CWNodeDataFactor.Instance.AddInformationToInspector(InspectorDatas);
         CWNodeDataFactor.Instance.AddInformationToBlackBoard(BlackBoardDatas);
+
+        
+    }
+    public override void OnUnselected()
+    {
     }
 }

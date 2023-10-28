@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 public class MainUI : TwoPaneSplitView
 {
@@ -32,18 +33,22 @@ public class MainUI : TwoPaneSplitView
     private VisualTreeAsset inspectorTree = Resources.Load<VisualTreeAsset>("Uxml/Inspector");
 
     private List<string> dropTypes = new List<string>() {
-        "Boolean","Float"
+        "Boolean","Float","Vector2","String"
     };
     private Dictionary<string, Type> variableDicionary = new Dictionary<string, Type>()
     {
         {"Boolean",typeof(VariableBool) },
         {"Float",typeof(VariableFloat) },
+        {"Vector2",typeof(VariableVector2) },
+        {"String",typeof(VariableString) },
     };
     public MainUI()
     {
         InitWindow();
         CWNodeDataFactor.Instance.Inspector = inspector;
         CWNodeDataFactor.Instance.BlackBoardContent = blackBoardContent;
+        CWNodeDataFactor.Instance.blackBoardListView = blackBoardContent.Q<ListView>("variables");
+
     }
 
     private void InitWindow()
@@ -75,6 +80,7 @@ public class MainUI : TwoPaneSplitView
         types = blackBoardContent.Q<DropdownField>("variableType");
         addVariable = blackBoardContent.Q<Button>("add");
         variableName = blackBoardContent.Q<TextField>("variableName");
+        deleteVariable=blackBoardContent.Q<Button>("delete");
     }
 
     private void SetProp()
@@ -109,8 +115,24 @@ public class MainUI : TwoPaneSplitView
         saveAsset.clicked += SaveClicked;
         loadAsset.clicked += LoadClicked;
         addVariable.clicked += AddVariableClicked;
+        deleteVariable.clicked += DeleteVariableClicked;
     }
 
+    private void DeleteVariableClicked()
+    {
+        foreach (CWNode node in graphView.nodes)
+        {
+            if (node.GUID == CWNodeDataFactor.Instance.NodeGUID)
+            {
+                Debug.Log(node.BlackBoardDatas.VariableNames.Count);
+                Debug.Log(node.BlackBoardDatas.Variables.Count);
+                node.BlackBoardDatas.VariableNames.RemoveAt(node.BlackBoardDatas.VariableNames.Count-1);
+                node.BlackBoardDatas.Variables.RemoveAt(node.BlackBoardDatas.Variables.Count - 1);
+                CWNodeDataFactor.Instance.AddInformationToBlackBoard(node.BlackBoardDatas);
+                return;
+            }
+        }
+    }
 
     private void AddElements()
     {
@@ -135,32 +157,51 @@ public class MainUI : TwoPaneSplitView
     {
         string index = types.value;
         string name = variableName.value;
-        Type variableType = variableDicionary[index];
+
+        if (name==string.Empty)
+        {
+            return;
+        }
+
+        Type variableType=null;
+        try
+        {
+            variableType = variableDicionary[index];
+        }
+        catch (Exception ex)
+        {
+            Debug.Log(ex.Message);
+            return;
+        }
 
         VariablesReference obj = ScriptableObject.CreateInstance(variableType.Name) as VariablesReference;
+        
         foreach (CWNode node in graphView.nodes)
         {
             if (node.GUID == CWNodeDataFactor.Instance.NodeGUID)
             {
                 node.BlackBoardDatas.VariableNames.Add(name);
                 node.BlackBoardDatas.Variables.Add(obj);
+                node.BlackBoardDatas.VariableTypes.Add(variableType.Name);
+                CWNodeDataFactor.Instance.AddInformationToBlackBoard(node.BlackBoardDatas);
+                return;
             }
         }
-        CWNodeDataFactor.Instance.blackBoardListView.RefreshItems();
-
-
     }
     private void NewClicked()
     {
         graphView.CleanGraphView();
-        //CWNodeDataFactor.Instance.templateBlackBoardContainer.Clear();
+        CWNodeDataFactor.Instance.AddInformationToBlackBoard(null);
+
 
     }
 
     private void LoadClicked()
     {
         graphView.LoadAsset(assetName.value);
-        //CWNodeDataFactor.Instance.templateBlackBoardContainer.Clear();
+        CWNodeDataFactor.Instance.AddInformationToBlackBoard(null);
+
+
     }
 
     private void SaveClicked()

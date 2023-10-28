@@ -11,7 +11,7 @@ public class NodeGraphSaveTools
     private MyGraphView _graphView;
     private List<Edge> edges => _graphView.edges.ToList();
     private List<CWNode> nodes => _graphView.nodes.ToList().Cast<CWNode>().ToList();
-
+    BehaviourContainer loadedAsset;
     public static NodeGraphSaveTools GetInstance(MyGraphView graphView)
     {
         return new NodeGraphSaveTools { _graphView = graphView };
@@ -20,25 +20,21 @@ public class NodeGraphSaveTools
     public void SaveAsset(string fileName)
     {
         BehaviourContainer obj = ScriptableObject.CreateInstance<BehaviourContainer>();
-        if (!SaveNodes(obj))
+        loadedAsset = AssetDatabase.LoadAssetAtPath($"Assets/Resources/BehaviourTrees/{fileName}.asset", typeof(BehaviourContainer)) as BehaviourContainer;
+        if (loadedAsset == null || !AssetDatabase.Contains(loadedAsset))
+        {
+            AssetDatabase.CreateAsset(obj, $"Assets/Resources/BehaviourTrees/{fileName}.asset");
+            return;
+        }
+        if (!SaveNodes(obj, fileName))
             return;
         //SaveNodeProperties(obj);
 
-        UnityEngine.Object loadedAsset = AssetDatabase.LoadAssetAtPath($"Assets/Resources/{fileName}.asset", typeof(BehaviourContainer));
-
-        if (loadedAsset == null || !AssetDatabase.Contains(loadedAsset))
-        {
-            AssetDatabase.CreateAsset(obj, $"Assets/Resources/{fileName}.asset");
-        }
-        else
-        {
-            BehaviourContainer container = loadedAsset as BehaviourContainer;
-
-            container.NodeLinkDatas = obj.NodeLinkDatas;
-            container.NodeDatas = obj.NodeDatas;
-            container.NodePropertyDatas = obj.NodePropertyDatas;
-            EditorUtility.SetDirty(container);
-        }
+        //loadedAsset = AssetDatabase.LoadAssetAtPath($"Assets/Resources/BehaviourTrees/{fileName}.asset", typeof(BehaviourContainer)) as BehaviourContainer;
+        loadedAsset.NodeLinkDatas = obj.NodeLinkDatas;
+        loadedAsset.NodeDatas = obj.NodeDatas;
+        loadedAsset.NodePropertyDatas = obj.NodePropertyDatas;
+        EditorUtility.SetDirty(loadedAsset);
 
         AssetDatabase.SaveAssets();
     }
@@ -48,8 +44,9 @@ public class NodeGraphSaveTools
         throw new NotImplementedException();
     }
 
-    private bool SaveNodes(BehaviourContainer obj)
+    private bool SaveNodes(BehaviourContainer obj, string fileName)
     {
+
         var connectedSockets = edges.Where(x => x.input.node != null).ToArray();
 
         foreach (var connectedSocket in connectedSockets)
@@ -62,7 +59,10 @@ public class NodeGraphSaveTools
                 TargetGUID = inputNode.GUID,
             });
         }
-
+        //CleanAsset();
+        loadedAsset.NodeInspectors.Clear();
+        loadedAsset.NodeBlackBoards.Clear();
+        loadedAsset.NodeVariables.Clear();
         foreach (CWNode node in nodes)
         {
             obj.NodeDatas.Add(new CWNodeData()
@@ -70,16 +70,57 @@ public class NodeGraphSaveTools
                 NodeGUID = node.GUID,
                 Position = node.GetPosition().position,
                 NodeTypeName = node.GetType().Name,
-                InspectorDatas = node.InspectorDatas,
-                BlackBoardDatas = node.BlackBoardDatas
+
+                Expansion = node.InspectorDatas.Expansion,
+                NodeType = node.InspectorDatas.NodeType,
+                NodeName = node.InspectorDatas.NodeName,
+
+                VariableNames = node.BlackBoardDatas.VariableNames,
+                Variables = node.BlackBoardDatas.Variables,
+                VariableTypes = node.BlackBoardDatas.VariableTypes,
+
+                Inspector = node.InspectorDatas,
+                BlackBoard = node.BlackBoardDatas,
             });
+            AddObjectToAsset(node);
+
         }
         return true;
     }
 
+    //private void CleanAsset()
+    //{
+    //    foreach (var item in loadedAsset.NodeInspectors)
+    //    {
+    //        AssetDatabase.RemoveObjectFromAsset(item);
+    //    }
+    //    foreach (var item in loadedAsset.NodeBlackBoards)
+    //    {
+    //        AssetDatabase.RemoveObjectFromAsset(item);
+    //    }
+    //    loadedAsset.NodeInspectors.Clear();
+    //    loadedAsset.NodeBlackBoards.Clear();
+    //}
+
+    void AddObjectToAsset(CWNode node)
+    {
+        foreach (var Variable in node.BlackBoardDatas.Variables)
+        {
+            AssetDatabase.RemoveObjectFromAsset(Variable);
+            AssetDatabase.AddObjectToAsset(Variable, loadedAsset);
+            loadedAsset.NodeVariables.Add(Variable);
+        }
+        AssetDatabase.RemoveObjectFromAsset(node.InspectorDatas);
+        AssetDatabase.RemoveObjectFromAsset(node.BlackBoardDatas);
+        AssetDatabase.AddObjectToAsset(node.InspectorDatas, loadedAsset);
+        AssetDatabase.AddObjectToAsset(node.BlackBoardDatas, loadedAsset);
+
+        loadedAsset.NodeInspectors.Add(node.InspectorDatas);
+        loadedAsset.NodeBlackBoards.Add(node.BlackBoardDatas);
+    }
     public void LoadAsset(string name)
     {
-        BehaviourContainer _container = Resources.Load<BehaviourContainer>(name);
+        BehaviourContainer _container = Resources.Load<BehaviourContainer>("BehaviourTrees/" + name);
         if (_container == null)
             return;
         CleanGraphView();
@@ -124,13 +165,14 @@ public class NodeGraphSaveTools
     {
         List<CWNodeData> datas = _container.NodeDatas;
         List<CWNodeLinkData> linkDatas = _container.NodeLinkDatas;
+        List<VariablesReference> variablesReferences = new List<VariablesReference>();
         CWNode _node;
         foreach (var item in datas)
         {
             _node = Activator.CreateInstance(Type.GetType(item.NodeTypeName)) as CWNode;
             _node.GUID = item.NodeGUID;
-            _node.InspectorDatas = item.InspectorDatas;
-            _node.BlackBoardDatas = item.BlackBoardDatas;
+            _node.InspectorDatas = item.Inspector;
+            _node.BlackBoardDatas = item.BlackBoard;
             foreach (var GUIDS in linkDatas)
             {
                 if (_node.GUID == GUIDS.BasePortGUID)
