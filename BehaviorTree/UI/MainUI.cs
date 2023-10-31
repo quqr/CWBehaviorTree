@@ -1,10 +1,10 @@
-using UnityEngine.UIElements;
-using UnityEditor;
-using UnityEngine;
-using Unity.VisualScripting;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 using System.Linq;
+using System.Reflection;
+using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 public class MainUI : TwoPaneSplitView
 {
@@ -28,32 +28,25 @@ public class MainUI : TwoPaneSplitView
     private Button addVariable;
     private TextField variableName;
 
-
     private VisualTreeAsset blackBoardTree = Resources.Load<VisualTreeAsset>("Uxml/Blackboard");
     private VisualTreeAsset inspectorTree = Resources.Load<VisualTreeAsset>("Uxml/Inspector");
 
-    private List<string> dropTypes = new List<string>() {
-        "Boolean","Float","Vector2","String"
-    };
-    private Dictionary<string, Type> variableDicionary = new Dictionary<string, Type>()
-    {
-        {"Boolean",typeof(VariableBool) },
-        {"Float",typeof(VariableFloat) },
-        {"Vector2",typeof(VariableVector2) },
-        {"String",typeof(VariableString) },
-    };
+    private List<string> dropTypes = new List<string>();
+
+    private Dictionary<string, Type> variableDicionary = new Dictionary<string, Type>();
+
     public MainUI()
     {
         InitWindow();
         CWNodeDataFactor.Instance.Inspector = inspector;
         CWNodeDataFactor.Instance.BlackBoardContent = blackBoardContent;
         CWNodeDataFactor.Instance.blackBoardListView = blackBoardContent.Q<ListView>("variables");
-
     }
 
     private void InitWindow()
     {
         Initialize();
+        InitVariables();
 
         SetProp();
 
@@ -61,7 +54,26 @@ public class MainUI : TwoPaneSplitView
 
         AddElements();
     }
-
+    void InitVariables()
+    {
+        List<Type> types = new List<Type>();
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            List<Type> result = assembly.GetTypes().Where(type =>
+            {
+                return type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(VariablesReference));
+            }).ToList();
+            types.AddRange(result);
+        }
+        foreach (var item in types)
+        {
+            string path = item.GetAttribute<VariablesAttribute>()?.VariablesPath;
+            if (path == null) { continue; }
+            string[] name = path.Split('/');
+            dropTypes.Add(name[1]);
+            variableDicionary[name[1]] = item;
+        }
+    }
     private void Initialize()
     {
         leftPane = new VisualElement();
@@ -80,7 +92,7 @@ public class MainUI : TwoPaneSplitView
         types = blackBoardContent.Q<DropdownField>("variableType");
         addVariable = blackBoardContent.Q<Button>("add");
         variableName = blackBoardContent.Q<TextField>("variableName");
-        deleteVariable=blackBoardContent.Q<Button>("delete");
+        deleteVariable = blackBoardContent.Q<Button>("delete");
     }
 
     private void SetProp()
@@ -126,7 +138,7 @@ public class MainUI : TwoPaneSplitView
             {
                 Debug.Log(node.BlackBoardDatas.VariableNames.Count);
                 Debug.Log(node.BlackBoardDatas.Variables.Count);
-                node.BlackBoardDatas.VariableNames.RemoveAt(node.BlackBoardDatas.VariableNames.Count-1);
+                node.BlackBoardDatas.VariableNames.RemoveAt(node.BlackBoardDatas.VariableNames.Count - 1);
                 node.BlackBoardDatas.Variables.RemoveAt(node.BlackBoardDatas.Variables.Count - 1);
                 CWNodeDataFactor.Instance.AddInformationToBlackBoard(node.BlackBoardDatas);
                 return;
@@ -153,17 +165,18 @@ public class MainUI : TwoPaneSplitView
         inspector.Add(inspectorContent);
         blackBoard.Add(blackBoardContent);
     }
+
     private void AddVariableClicked()
     {
         string index = types.value;
         string name = variableName.value;
 
-        if (name==string.Empty)
+        if (name == string.Empty)
         {
             return;
         }
 
-        Type variableType=null;
+        Type variableType = null;
         try
         {
             variableType = variableDicionary[index];
@@ -175,7 +188,7 @@ public class MainUI : TwoPaneSplitView
         }
 
         VariablesReference obj = ScriptableObject.CreateInstance(variableType.Name) as VariablesReference;
-        
+
         foreach (CWNode node in graphView.nodes)
         {
             if (node.GUID == CWNodeDataFactor.Instance.NodeGUID)
@@ -188,25 +201,21 @@ public class MainUI : TwoPaneSplitView
             }
         }
     }
+
     private void NewClicked()
     {
         graphView.CleanGraphView();
         CWNodeDataFactor.Instance.AddInformationToBlackBoard(null);
-
-
     }
 
     private void LoadClicked()
     {
         graphView.LoadAsset(assetName.value);
         CWNodeDataFactor.Instance.AddInformationToBlackBoard(null);
-
-
     }
 
     private void SaveClicked()
     {
         graphView.SaveAsset(assetName.value);
-
     }
 }

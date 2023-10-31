@@ -11,7 +11,8 @@ public class NodeGraphSaveTools
     private MyGraphView _graphView;
     private List<Edge> edges => _graphView.edges.ToList();
     private List<CWNode> nodes => _graphView.nodes.ToList().Cast<CWNode>().ToList();
-    BehaviourContainer loadedAsset;
+    private BehaviourContainer loadedAsset;
+
     public static NodeGraphSaveTools GetInstance(MyGraphView graphView)
     {
         return new NodeGraphSaveTools { _graphView = graphView };
@@ -46,7 +47,6 @@ public class NodeGraphSaveTools
 
     private bool SaveNodes(BehaviourContainer obj, string fileName)
     {
-
         var connectedSockets = edges.Where(x => x.input.node != null).ToArray();
 
         foreach (var connectedSocket in connectedSockets)
@@ -83,7 +83,6 @@ public class NodeGraphSaveTools
                 BlackBoard = node.BlackBoardDatas,
             });
             AddObjectToAsset(node);
-
         }
         return true;
     }
@@ -102,7 +101,7 @@ public class NodeGraphSaveTools
     //    loadedAsset.NodeBlackBoards.Clear();
     //}
 
-    void AddObjectToAsset(CWNode node)
+    private void AddObjectToAsset(CWNode node)
     {
         foreach (var Variable in node.BlackBoardDatas.Variables)
         {
@@ -118,6 +117,7 @@ public class NodeGraphSaveTools
         loadedAsset.NodeInspectors.Add(node.InspectorDatas);
         loadedAsset.NodeBlackBoards.Add(node.BlackBoardDatas);
     }
+
     public void LoadAsset(string name)
     {
         BehaviourContainer _container = Resources.Load<BehaviourContainer>("BehaviourTrees/" + name);

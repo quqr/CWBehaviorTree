@@ -11,5 +11,5 @@ public class BehaviourContainer : ScriptableObject
 
     public List<CWNodeInspector> NodeInspectors = new List<CWNodeInspector>();
     public List<CWNodeBlackBoard> NodeBlackBoards = new List<CWNodeBlackBoard>();
-    public List<VariablesReference> NodeVariables=new List<VariablesReference>();
+    public List<VariablesReference> NodeVariables = new List<VariablesReference>();
 }

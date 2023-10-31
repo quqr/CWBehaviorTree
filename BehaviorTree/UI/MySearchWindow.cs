@@ -33,10 +33,9 @@ public class MySearchWindow : ScriptableObject, ISearchWindowProvider
             searchTreeEntry.Add(new SearchTreeEntry(new GUIContent(menus[1]))
             {
                 level = 1,
-                userData = type
+                userData = type,
             });
         }
-
         return searchTreeEntry;
     }
 

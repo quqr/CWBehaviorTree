@@ -8,7 +8,7 @@ public class BehaviourTree : EditorWindow
     [SerializeField]
     private VisualTreeAsset m_VisualTreeAsset = default;
     VisualElement main;
-    public VisualElement inspector;
+    private VisualElement inspector;
     [MenuItem("MyTools/BehaviorTree")]
     public static void ShowExample()
     {

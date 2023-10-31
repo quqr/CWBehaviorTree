@@ -63,9 +63,9 @@ public class MyGraphView : GraphView
     }
 
     //¡¨Ω”œﬂ
-    public Edge CreateEdge(Port inPort, Port outPort)
+    public CWEdge CreateEdge(Port inPort, Port outPort)
     {
-        Edge edge = new Edge { input = inPort, output = outPort };
+        CWEdge edge = new CWEdge { input = inPort, output = outPort };
         edge.input.Connect(edge);
         edge.output.Connect(edge);
         AddElement(edge);
@@ -107,7 +107,7 @@ public class MyGraphView : GraphView
         {
             RemoveElement(node);
         }
-        foreach (Edge edge in edges)
+        foreach (CWEdge edge in edges)
         {
             RemoveElement(edge);
         }

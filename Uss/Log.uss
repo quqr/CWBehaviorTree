@@ -21,7 +21,7 @@
     height: 119px;
 }
 
-#Selector {
+#Log {
     margin-top: 0;
     margin-right: 0;
     margin-bottom: 0;
@@ -30,14 +30,14 @@
     padding-right: 0;
     padding-bottom: 0;
     padding-left: 0;
-    background-color: rgb(122,197,205);
+    background-color: #f1ad6a;
     flex-shrink: 1;
     flex-grow: 0;
     flex-direction: column;
     align-items: auto;
     left: auto;
     width: 100%;
-    height: 50%;
+    height: 75%;
 }
 
 #contents {
@@ -55,7 +55,7 @@
     margin-bottom: 0;
     margin-left: 0;
     width: 100%;
-    height: 25%;
+    height: 15%;
 }
 
 #node-border {

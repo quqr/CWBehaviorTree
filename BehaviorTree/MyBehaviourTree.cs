@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public abstract class MyBehaviourTree : MonoBehaviour
 {
     [SerializeField]
     protected CWNode rootNode;
-    List<CWNode> nodes=new List<CWNode>();
+
+    private List<CWNode> nodes = new List<CWNode>();
+
     private void Start()
     {
         rootNode = SetupRoot();
@@ -28,6 +29,7 @@ public abstract class MyBehaviourTree : MonoBehaviour
     {
         return GetAllNodes(asset)[0];
     }
+
     protected List<CWNode> GetAllNodes(BehaviourContainer asset)
     {
         List<CWNodeData> NodeDatas = asset.NodeDatas;
